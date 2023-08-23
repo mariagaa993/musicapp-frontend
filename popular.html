@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Music App</title>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+		integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+	<link rel="stylesheet" href="styles.css">
+	<script src="https://kit.fontawesome.com/342037ea6d.js" crossorigin="anonymous"></script>
+	<script src="jwt-decode.js"></script>
+</head>
+<style>
+	body {
+		background-color: #162E59;
+	}
+</style>
+
+<body id="view">
+	<div class="container-fluid pb-5 mb-5">
+		<nav class="navbar navbar-expand-lg navbar-light pt-3">
+			<div class="container-fluid">
+				<a class="navbar-brand text-white">
+					<i class="fa fa-video-camera"></i>
+					Movie App
+				</a>
+				<div class="collapse navbar-collapse" id="navbarSupportedContent">
+					<ul class="navbar-nav me-auto mb-2 mb-lg-0">
+						<li class="nav-item">
+							<a class="nav-link text-white" href="home.html">Recent</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link text-white">Popular</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link text-white" href="toprated.html">Top Rated</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link text-white" href="favorite.html">Favorites</a>
+						</li>
+					</ul>
+					<div class="d-flex">
+						<h5 id="welcome" style="margin-right: 24px;" class="text-white mt-1">Welcome: </h5>
+						<button class="btn btn-dark" id="logoutButton">Log out</button>
+					</div>
+				</div>
+			</div>
+		</nav>
+
+		<h1 class="text-center pb-5 pt-5 text-white">Popular Movies</h1>
+		<div class="loader-container" id="loaderContainer">
+			<div class="loader"></div>
+		</div>	
+		<div class="container" id="card-template"
+			style="display: flex; flex-wrap: wrap; justify-content: space-between;"></div>
+		<nav id="pagination" class="mt-3">
+			<ul class="pagination justify-content-center">
+				<li class="page-item m-1">
+					<button id="prev-btn" class="btn btn-light">Previous</button>
+				</li>
+				<li class="page-item m-1">
+					<span id="page-num" class="page-link">Page 1</span>
+				</li>
+				<li class="page-item m-1">
+					<button id="next-btn" class="btn btn-light">Next</button>
+				</li>
+			</ul>
+		</nav>
+	</div>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+		integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+		crossorigin="anonymous"></script>
+	<script>
+
+		const prevButton = document.getElementById('prev-btn');
+		const nextButton = document.getElementById('next-btn');
+		const pageNumSpan = document.getElementById('page-num');
+		const token = localStorage.getItem("token");
+		const view = document.getElementById("view");
+		const logoutButton = document.getElementById('logoutButton');
+		const welcome = document.getElementById("welcome");
+		const loaderContainer = document.getElementById('loaderContainer');
+  		loaderContainer.style.display = 'flex';
+		let validation = false;
+		let currentPage = 1;
+
+		welcome.innerHTML += `${localStorage.getItem("name")}`
+
+		if (token) {
+			const decodedToken = jwt_decode(token);
+			const currentTime = Date.now() / 1000;
+
+			if (decodedToken.exp < currentTime) {
+				validation = true;
+				view.innerHTML = `
+                    <div class="container-fluid text-center">
+                        <h1 class="pt-5 pb-3 text-white">You must log in. Go back to</h1>
+                        <a href="index.html" style="width:10%" class="btn btn-primary">Log in</a>
+                    </div>
+                `
+			} else {
+				console.log('Valid Token!')
+			}
+		} else {
+			validation = true;
+			view.innerHTML = `
+                    <div class="container-fluid text-center">
+                        <h1 class="pt-5 pb-3 text-white">You must log in. Go back to</h1>
+                        <a href="index.html" style="width:10%" class="btn btn-primary">Log in</a>
+                    </div>
+                `
+		}
+
+		prevButton.addEventListener('click', () => {
+			if (currentPage > 1) {
+				currentPage--;
+				fetchMovies(currentPage);
+			}
+		});
+
+		nextButton.addEventListener('click', () => {
+			currentPage++;
+			fetchMovies(currentPage);
+		});
+
+		const fetchMovies = (page) => {
+			fetch(`https://musicapp-production-73f6.up.railway.app/api/movies/popular?page=${page}`, {
+				method: "GET",
+				headers: {
+					"Content-Type": "application/json",
+					"Authorization": `Bearer ${localStorage.getItem('token')}`
+				}
+			})
+				.then(res => res.json())
+				.then(data => {
+					clearMovies();
+					getMovies(data.results);
+					updatePagination(page, data.total_pages);
+					scrollToTop();
+				}).catch(e => {
+					alert("Ops! There was a problem. Please try again later!")
+				}).finally(() => {
+					loaderContainer.style.display = 'none';
+				});
+		}
+
+		const updatePagination = (page, totalPages) => {
+			pageNumSpan.textContent = `Page ${page}`;
+			prevButton.disabled = page === 1;
+			nextButton.disabled = page === totalPages;
+		}
+
+		if (!validation) {
+			fetchMovies(currentPage);
+		}
+
+		logoutButton.addEventListener('click', () => {
+			localStorage.removeItem('token');
+			window.location.href = 'index.html';
+		});
+
+		const scrollToTop = () => {
+			window.scrollTo({
+			top: 0,
+			behavior: 'smooth' 
+			});
+		}
+
+	</script>
+	<script src="index.js"></script>
+</body>
+
+</html>
