@@ -129,7 +129,7 @@
             const currentTime = Date.now() / 1000;
 
             if (decodedToken.exp < currentTime) {
-                console.log('Valid Token!')
+                console.log();
             } else {
                 view.innerHTML = `
                     <div class="container-fluid text-center">
@@ -139,7 +139,7 @@
                 `
             }
         } else {
-            console.log('Token not found');
+            console.log();
         }
 
     </script>

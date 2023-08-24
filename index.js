@@ -136,7 +136,7 @@ const register = (fullname, email, password) => {
             localStorage.setItem("token", data.token);
             window.location.href = "home.html"   
         } else {
-            console.log("No token");
+            alert("There is already an account with that email")
         }
     }).catch(e => {
         alert("Ops! There was a problem. Please try again later!")
