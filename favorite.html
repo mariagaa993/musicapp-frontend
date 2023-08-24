@@ -141,7 +141,13 @@
 				.then(data => {
 					clearMovies();
 					getFavoriteMovies(data.results);
-					updatePagination(page, data.totalPages);
+
+					if (data.results.length < 1) {
+						updatePagination(1, 1);
+					} else {
+						updatePagination(page, data.totalPages);
+					}
+
 					const favoriteData = JSON.stringify(data);
 					localStorage.setItem('favoriteData', favoriteData);
 					scrollToTop();

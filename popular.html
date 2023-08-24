@@ -136,7 +136,13 @@
 				.then(data => {
 					clearMovies();
 					getMovies(data.results);
-					updatePagination(page, data.total_pages);
+					
+					if (data.results.length < 1) {
+						updatePagination(1, 1);
+					} else {
+						updatePagination(page, data.total_pages);
+					}
+
 					scrollToTop();
 				}).catch(e => {
 					alert("Ops! There was a problem. Please try again later!")
